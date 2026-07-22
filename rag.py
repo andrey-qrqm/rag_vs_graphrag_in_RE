@@ -4,14 +4,21 @@ import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from sentence_transformers import SentenceTransformer
 from huggingface_hub import login, whoami
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
 
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
-print(HF_TOKEN)
 login(HF_TOKEN)
 TOP_K = 5
+
 MODEL_NAME = "sentence-transformers/multi-qa-mpnet-base-cos-v1"
+MONGODB_USER = os.getenv("MONGODB_USER")
+MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
+MONGO_URI = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@slmsbt.pto3n3r.mongodb.net/"
+client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
+collection = client["rag_db"]["nfr_chunks"]
 
 def load_chunks() -> list[dict]:
     with open(FILENAME, "r", encoding="utf-8") as f:
@@ -53,6 +60,32 @@ def retrieve(query: str) -> list[dict]:
 
     return sorted(scored, key=lambda x: x["score"], reverse=True)[:TOP_K]
 
+
+def retrieve_mongoDB(query: str) -> list[dict]:
+  model = SentenceTransformer(MODEL_NAME)
+  query_embedding = model.encode(query).tolist()
+
+  pipeline = [
+      {
+          "$vectorSearch": {
+              "index": "vector_index_nfr",
+              "path": "embedding",
+              "queryVector": query_embedding,
+              "numCandidates": 100,
+              "limit": TOP_K
+          }
+      },
+      {
+          "$project": {
+              "_id": 0,
+              "content": 1,
+              "source": 1,
+              "score": {"$meta": "vectorSearchScore"}
+          }
+      }
+  ]
+
+  return list(collection.aggregate(pipeline))
 
 tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
 model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-1B-Instruct")
@@ -96,5 +129,36 @@ def get_output(query: str) -> str:
   print(result[0]['generated_text'])
   return result[0]['generated_text']
 
+
+def get_output_mongoDB(query: str) -> str:
+  context = retrieve_mongoDB(query)
+  print(context)
+  context = " ".join(c["content"] for c in context)
+
+  enhanced = f"""
+    QUERY - {query},
+    CONTEXT - {context}
+  """
+
+  pipe = pipeline(
+    'text-generation',
+    model=model,
+    tokenizer=tokenizer,
+    torch_dtype=torch.float16,
+    device_map="auto",
+    max_new_tokens=64,
+  )
+
+  messages = [
+    {"role": "user", "content": enhanced}
+  ]
+
+  result = pipe(messages)
+  print(result[0]['generated_text'])
+  return result[0]['generated_text']
+
 query = "Which users can access the Disputes System?"
-get_output(query)
+print("CONTEXT MONGO_DB: ", retrieve_mongoDB(query))
+
+output = get_output_mongoDB(query)
+print("OUTPUT MONGO_DB: ", output)
