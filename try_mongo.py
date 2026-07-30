@@ -11,10 +11,10 @@ MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
 MONGO_URI = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@slmsbt.pto3n3r.mongodb.net/"
 
 MODEL_NAME = "sentence-transformers/multi-qa-mpnet-base-cos-v1"
-FILENAME = "software_requirements_data/nfr.txt"
+FILENAME = "pure_dataset/XMLZIPFILE/2010-blitdraft.xml"
 
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
-collection = client["rag_db"]["nfr_chunks"]
+collection = client["rag_db"]["pure_blitdraft"]
 
 def load_chunks() -> list[dict]:
     with open(FILENAME, "r", encoding="utf-8") as f:

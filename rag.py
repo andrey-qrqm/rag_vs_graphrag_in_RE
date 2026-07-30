@@ -18,14 +18,14 @@ MONGODB_USER = os.getenv("MONGODB_USER")
 MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
 MONGO_URI = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@slmsbt.pto3n3r.mongodb.net/"
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
-collection = client["rag_db"]["nfr_chunks"]
+collection = client["rag_db"]["pure_blitdraft"]
 
 def load_chunks() -> list[dict]:
     with open(FILENAME, "r", encoding="utf-8") as f:
         return [{"content": line.rstrip("\n"), "source": FILENAME} for line in f]
     
-FILENAME = "software_requirements_data/nfr.txt"
-chunks = load_chunks()
+FILENAME = "pure_dataset/XMLZIPFile/2010-blitdraft.xml"
+#chunks = load_chunks()
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
@@ -68,7 +68,7 @@ def retrieve_mongoDB(query: str) -> list[dict]:
   pipeline = [
       {
           "$vectorSearch": {
-              "index": "vector_index_nfr",
+              "index": "pure_blitdraft_index",
               "path": "embedding",
               "queryVector": query_embedding,
               "numCandidates": 100,
@@ -78,8 +78,12 @@ def retrieve_mongoDB(query: str) -> list[dict]:
       {
           "$project": {
               "_id": 0,
-              "content": 1,
-              "source": 1,
+              "id": 1,
+              "branch": 1,
+              "module": 1,
+              "usecase": 1,
+              "action": 1,
+              "requirement": 1,
               "score": {"$meta": "vectorSearchScore"}
           }
       }
@@ -95,7 +99,7 @@ pipe = pipeline(
     tokenizer=tokenizer,
     torch_dtype=torch.float16,
     device_map="auto",
-    max_new_tokens=256,
+    max_new_tokens=128,
 )
 
 def get_context(query: str) -> list[dict]:
@@ -105,7 +109,7 @@ def get_context(query: str) -> list[dict]:
 
 def get_output(query: str) -> str:
   context = get_context(query)
-  context = " ".join(c["content"] for c in context)
+  context = " ".join(c["requirement"] for c in context)
 
   enhanced = f"""
     QUERY - {query},
@@ -118,7 +122,7 @@ def get_output(query: str) -> str:
     tokenizer=tokenizer,
     torch_dtype=torch.float16,
     device_map="auto",
-    max_new_tokens=64,
+    max_new_tokens=128,
   )
 
   messages = [
@@ -133,7 +137,7 @@ def get_output(query: str) -> str:
 def get_output_mongoDB(query: str) -> str:
   context = retrieve_mongoDB(query)
   print(context)
-  context = " ".join(c["content"] for c in context)
+  context = " ".join(c["requirement"] for c in context)
 
   enhanced = f"""
     QUERY - {query},
@@ -146,7 +150,7 @@ def get_output_mongoDB(query: str) -> str:
     tokenizer=tokenizer,
     torch_dtype=torch.float16,
     device_map="auto",
-    max_new_tokens=64,
+    max_new_tokens=128,
   )
 
   messages = [
@@ -157,7 +161,8 @@ def get_output_mongoDB(query: str) -> str:
   print(result[0]['generated_text'])
   return result[0]['generated_text']
 
-query = "Which users can access the Disputes System?"
+query = """Does this requirement has any contradictions with any other requirement? If yes - show the requirement it contradicts.:
+ Query - The system shall not display operational page to any user besides with administrator role."""
 print("CONTEXT MONGO_DB: ", retrieve_mongoDB(query))
 
 output = get_output_mongoDB(query)
