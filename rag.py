@@ -198,5 +198,5 @@ def contradiction_detection(filename: str) -> None:
 
 #output = get_output_mongoDB(query)
 #print("OUTPUT MONGO_DB: ", output)
-reqs_input_fname = "contradictions_blitdraft.txt"
+reqs_input_fname = "contradictions/contradictions_blitdraft.txt"
 contradiction_detection(reqs_input_fname)
