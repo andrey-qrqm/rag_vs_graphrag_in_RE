@@ -171,8 +171,10 @@ if __name__ == "__main__":
 
 
     chunks = chunk_xml(FILENAME)
-    print(json.dumps(chunks, indent=2, ensure_ascii=False))
+    #print(json.dumps(chunks, indent=2, ensure_ascii=False))
     print(f"\n{len(chunks)} requirement chunks extracted.")
-    ingest()
+    #ingest()
+    reqs = [c["requirement"] for c in chunks]
+    print(json.dumps(reqs, indent=2, ensure_ascii=False))
     print("Ingestion complete.")
     

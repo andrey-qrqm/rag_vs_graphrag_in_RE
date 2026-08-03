@@ -1,0 +1,6 @@
+"The system shall permit a new user record to be created and saved for certain user types (e.g., contractor or temporary accounts) without any role, division, designator code, or lab location associated at creation time."
+"Any new user shall not associate a role, division, designator code, or lab location at the time of creation; these associations shall only be made after account activation, in a separate step."
+"New users created via bulk/batch import shall not be required to associate a lab location or designator code, though a role and division remain mandatory at creation."
+"The system shall log the timestamp and admin user ID for every new user creation event to the audit trail."
+"The system shall allow the admin user to preview the associated role(s), division(s), designator code, and lab location before clicking Save."
+"The system shall complete the Active Directory status verification and [system name] user existence search within the same synchronous request before returning a result to the admin user."

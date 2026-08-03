@@ -20,12 +20,12 @@ MONGO_URI = f"mongodb+srv://{MONGODB_USER}:{MONGODB_PASSWORD}@slmsbt.pto3n3r.mon
 client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
 collection = client["rag_db"]["pure_blitdraft"]
 
-def load_chunks() -> list[dict]:
-    with open(FILENAME, "r", encoding="utf-8") as f:
-        return [{"content": line.rstrip("\n"), "source": FILENAME} for line in f]
-    
+def load_chunks(filename: str) -> list[dict]:
+    with open(filename, "r", encoding="utf-8") as f:
+        return [{"content": line.rstrip("\n"), "source": filename} for line in f]
+
 FILENAME = "pure_dataset/XMLZIPFile/2010-blitdraft.xml"
-#chunks = load_chunks()
+#chunks = load_chunks(FILENAME)
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
@@ -44,7 +44,7 @@ def retrieve(query: str) -> list[dict]:
       - "score": float    — relevance score (higher = better)
     """
     model = SentenceTransformer(MODEL_NAME)
-    chunks = load_chunks()
+    chunks = load_chunks(FILENAME)
 
     if not chunks:
         return []
@@ -154,16 +154,49 @@ def get_output_mongoDB(query: str) -> str:
   )
 
   messages = [
-    {"role": "user", "content": enhanced}
+    {
+        "role": "system",
+        "content": (
+            "You are a contradiction-detection system. "
+            "Given a requirement statement as an input, respond with Contradiction if input requirement contradicts any one requirement from the context "
+            "Otherwise, respond with No Contradiction. "
+            "Contradiction are present in this forms only: "
+            """Contradictory opposites like e.g. “he is alive” and “he is not alive” are mutually exhaustive and mutually inconsistent. That states that one statement must be true and the other one false, same vice versa. It is mutually impossible for both statements to be true at the same time. 
+            "Contrary opposites like e.g. “this block is fully red” and “this block is fully black” are also mutually inconsistent, however not exhaustive. They cannot be true at the same time, but they can both be false.
+            Subcontraries e.g. “some people can swim” and “some people can’t swim” are mutually consistent. They can be true at the same time, but they cannot be false at the same time. 
+            Subalterns e.g. “Some students had good grade” is the subaltern to a “all students had good grade”. If the statement is true, its subaltern is always true, and if the statement is false, its subaltern is correspondingly false
+            Dialectic contradictions, often called conflict of goals, are considered incompatible in practice, while not presenting mathematical or logical conflict. The example could be:
+            “The system must have highest performance possible”
+            “The system must have lowest resource consumption possible”
+            Antinomies denote logical structures where truth can be oscillating. Famous example is Plato says, “Socrates speaks the truth”, Socrates says “Plato lies”
+            """
+            "In your answer provide the one requirement from the context that contradicts the input requirement. If there are multiple contradictions, provide only one. And the type of contradiction. If there is no contradiction, respond with No Contradiction."
+        )
+    },
+    {
+        "role": "user",
+        "content": f"Input requirement: {query}.\n Context: {context}"
+    }
   ]
 
   result = pipe(messages)
-  print(result[0]['generated_text'])
-  return result[0]['generated_text']
+  result_text = result[0]["generated_text"][-1]["content"].strip()
+  #print(result_text)
+  return result_text
 
 query = """Does this requirement has any contradictions with any other requirement? If yes - show the requirement it contradicts.:
  Query - The system shall not display operational page to any user besides with administrator role."""
-print("CONTEXT MONGO_DB: ", retrieve_mongoDB(query))
+#print("CONTEXT MONGO_DB: ", retrieve_mongoDB(query))
 
-output = get_output_mongoDB(query)
-print("OUTPUT MONGO_DB: ", output)
+def contradiction_detection(filename: str) -> None:
+    reqs_input = load_chunks(filename)
+    for req in reqs_input:
+        print(f"\nInput requirement: {req['content']}")
+        output = get_output_mongoDB(req['content'])
+        print(f"\nOutput: {output}\n")
+
+
+#output = get_output_mongoDB(query)
+#print("OUTPUT MONGO_DB: ", output)
+reqs_input_fname = "contradictions_blitdraft.txt"
+contradiction_detection(reqs_input_fname)
