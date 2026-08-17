@@ -18,6 +18,7 @@ Output: one dict per requirement leaf, keys:
 """
 
 import os
+import json
 import xml.etree.ElementTree as ET
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
@@ -138,8 +139,12 @@ def chunk_xml(path: str) -> list:
     results = []
     for node in top_level:
         _parse(node, {}, results)
+    print(results[:2])
     return results
 
+def save_requirements_to_json(requirements: list[dict], output_path: str) -> None:
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(requirements, f, indent=2, ensure_ascii=False)
 
 def ingest():
     model = SentenceTransformer(MODEL_NAME)
@@ -171,6 +176,8 @@ if __name__ == "__main__":
 
 
     chunks = chunk_xml(FILENAME)
+    save_requirements_to_json(chunks, "dataset/2010-blitdraft.json")
+    print("Requirement chunks saved to dataset/2010-blitdraft.json")
     #print(json.dumps(chunks, indent=2, ensure_ascii=False))
     print(f"\n{len(chunks)} requirement chunks extracted.")
     #ingest()
