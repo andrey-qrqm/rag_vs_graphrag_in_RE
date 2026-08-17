@@ -1,0 +1,10 @@
+The User shall be able to choose a function by clicking the hyperlink.
+Related UIS specifies how system display the hyperlinks and descriptions
+Only user with admin privileges can Add or Create a new user and associate the user with specified role(s) in the system
+System should display an error message
+Yes, user can add roles manually while creating new user
+Yes, confirmation check is required after user presses cancel or close button
+Required fields shall be marked with red asterix
+No, system should clean up the data after user decides to click cancel and confirms it in confirmation window
+No, user must have at least one role
+No, user must have at least one designator code.

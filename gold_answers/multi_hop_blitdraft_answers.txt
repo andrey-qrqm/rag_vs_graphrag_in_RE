@@ -1,0 +1,6 @@
+User Name and Display Name have to be marked as required, with red asterisk.
+System must generate a standard error/warning message because User Name is a required field.
+System must check if the new User Name exist in the system and generate a standard error/warning if it does.
+No, admins could not create a user with no roles. User have to have at least one role
+After user chooses a function by clicking the hyperlink, system shall display the desired Operational page.
+All roles after creation are stored in the database, both from template and additional roles.

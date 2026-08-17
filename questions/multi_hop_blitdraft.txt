@@ -1,0 +1,6 @@
+Which fields should be marked with red asterisk in the User Information section while creating a new user?
+What system does on attempt to save information without User Name?
+What system does when admin attempts to create user with User Name that is already in the system?
+Can Admin create a user with no roles?
+What does system after user chooses the function and clicking on it?
+When Admin creates a user from the template and adds new additional roles to it, where are additional roles stored after creation? 

@@ -1,0 +1,10 @@
+How user should choose a function?
+What specifies how system display the hyperlinks and descriptions for the user?
+Who can create Users and associate roles to them?
+What happens if User is not in active directory?
+Can user manually add roles while creating a new user?
+Is confirmation check required after user presses the close button?
+How does the required fields are marked in forms?
+Does system saves any data after user clicks Cancel button while creating?
+Can user have no roles?
+Can user have empty designator code?
