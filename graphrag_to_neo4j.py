@@ -5,7 +5,7 @@ import time
 import os
 
 load_dotenv()
-GRAPHRAG_FOLDER='./output'
+GRAPHRAG_FOLDER='./graphrag_pure/output'
 NEO4J_URI=os.getenv("NEO4J_URL")
 NEO4J_USERNAME=os.getenv("NEO4J_USERNAME")
 NEO4J_PASSWORD=os.getenv("NEO4J_PASSWORD")
